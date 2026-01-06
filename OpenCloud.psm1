@@ -23,3 +23,28 @@ function Get-OpenCloudItem {
     }
     catch { if ($silent) { return $null } else { throw } }
 }
+
+function Set-OpenCloudItem {
+    [OutputType([bool])]
+    param (
+        [Alias("OpenCloudUrl")] [ValidateNotNullOrWhiteSpace()] [string]$url,
+        [Alias("ItemPath")] [ValidateNotNullOrWhiteSpace()] [string]$path,
+        [Alias("UploadPath")] [ValidateNotNullOrWhiteSpace()] [string]$source,
+        [Alias("UserId")] [ValidateNotNullOrWhiteSpace()] [string]$id,
+        [Alias("UserPassword")] [ValidateNotNullOrWhiteSpace()] [string]$pass,
+        [Alias("SpaceId")] [string]$space,
+        [Alias("OnErrorContinue")] [switch]$silent
+    )
+    try {
+        $rest = @{
+            Uri = $space ? "$url/dav/spaces/$space/$path" : "$url/remote.php/dav/files/$id/$path"
+            Method = "Put"
+            Authentication = "Basic"
+            Credential = [PSCredential]::new($id, (ConvertTo-SecureString $pass -AsPlainText -Force))
+            InFile = $source
+        }
+        Invoke-RestMethod @rest | Out-Null
+        return $true
+    }
+    catch { if ($silent) { return $false } else { throw } }
+}

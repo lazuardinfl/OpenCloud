@@ -1,3 +1,27 @@
+function Find-OpenCloudItem {
+    [OutputType([System.Xml.XmlDocument])]
+    param (
+        [Alias("OpenCloudUrl")] [ValidateNotNullOrWhiteSpace()] [string]$url,
+        [Alias("ItemPath")] [ValidateNotNullOrWhiteSpace()] [string]$path,
+        [Alias("UserId")] [ValidateNotNullOrWhiteSpace()] [string]$id,
+        [Alias("UserPassword")] [ValidateNotNullOrWhiteSpace()] [string]$pass,
+        [Alias("SpaceId")] [string]$space,
+        [Alias("BaseItemOnly")] [switch]$base,
+        [Alias("OnErrorContinue")] [switch]$silent
+    )
+    try {
+        $rest = @{
+            Uri = $space ? "$url/dav/spaces/$space/$path" : "$url/remote.php/dav/files/$id/$path"
+            Headers = @{ Depth = $base ? 0 : 1 }
+            CustomMethod = "PROPFIND"
+            Authentication = "Basic"
+            Credential = [PSCredential]::new($id, (ConvertTo-SecureString $pass -AsPlainText -Force))
+        }
+        return Invoke-RestMethod @rest
+    }
+    catch { if ($silent) { return $null } else { throw } }
+}
+
 function Get-OpenCloudItem {
     [OutputType([System.IO.FileInfo])]
     param (
